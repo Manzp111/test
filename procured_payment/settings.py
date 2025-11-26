@@ -206,6 +206,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",   # Vite frontend
     "http://127.0.0.1:5174", 
     "http://127.0.0.1:3000",
+    "https://gilbe.vercel.app/",
+    ""
   
 ]          # For development
 CORS_ALLOWED_ORIGINS_ALL=True
