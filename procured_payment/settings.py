@@ -81,24 +81,9 @@ WSGI_APPLICATION = 'procured_payment.wsgi.application'
 
 
 # settings.py
-import os
 
-DB_LIVE= config('DB_LIVE')
 
-if DB_LIVE in ["False",False]:
-    DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': "ist_db",
-        'USER': "postgres",
-        'PASSWORD': "Ng635188!",
-        'HOST': "localhost",
-        'PORT': "5432",
-    }
-    }
-else:
-
-    DATABASES = {
+DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': config('DB_NAME'),
