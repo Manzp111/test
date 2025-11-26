@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>3-Way Matching Report</title>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 30px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        h1, h2, h3 {
+            color: #003c8f;
+            margin-bottom: 5px;
+        }
+
+        .section-title {
+            background: #003c8f;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-top: 35px;
+            font-size: 16px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 5px solid #003c8f;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        table th {
+            background: #003c8f;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .status-ok { color: green; font-weight: bold; }
+        .status-warn { color: #cc8500; font-weight: bold; }
+        .status-bad { color: red; font-weight: bold; }
+
+        .footer {
+            margin-top: 50px;
+            font-size: 13px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>📄 3-Way Matching Report</h1>
+    <h3>Purchase Request: <strong>{{ pr.title }}</strong></h3>
+    <h4>Request ID: <strong>{{ pr.id }}</strong></h4>
+
+    <!-- REQUESTED BY -->
+    <div class="section-title">Requested By</div>
+    <div class="card">
+        <p><strong>Name:</strong> {{ staff.first_name }} {{ staff.last_name }}</p>
+        <p><strong>Email:</strong> {{ staff.email }}</p>
+    </div>
+
+    <!-- VENDOR CHECK -->
+    <div class="section-title">Vendor Verification</div>
+    <div class="card">
+        {% if vendor_match %}
+            <p class="status-ok">✔ Vendor Matched</p>
+        {% else %}
+            <p class="status-bad">✘ Vendor Mismatch</p>
+            <p><strong>PO Vendor:</strong> {{ details.po_vendor }}</p>
+            <p><strong>Receipt Vendor:</strong> {{ details.receipt_vendor }}</p>
+        {% endif %}
+    </div>
+
+    <!-- ITEM COMPARISON -->
+    <div class="section-title">Item-by-Item Matching</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>PO Price</th>
+                <th>Receipt Price</th>
+                <th>PO Qty</th>
+                <th>Receipt Qty</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in items %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>${{ row.po_price }}</td>
+                    <td>${{ row.receipt_price }}</td>
+                    <td>{{ row.po_qty }}</td>
+                    <td>{{ row.receipt_qty }}</td>
+
+                    <td>
+                        {% if row.status == "MATCHED" %}
+                            <span class="status-ok">Matched</span>
+                        {% elif row.status == "MISSING_IN_RECEIPT" %}
+                            <span class="status-bad">Missing in Receipt</span>
+                        {% elif row.status == "EXTRA_IN_RECEIPT" %}
+                            <span class="status-warn">Extra in Receipt</span>
+                        {% elif row.status == "MISMATCH" %}
+                            <span class="status-bad">Mismatch</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- SUMMARY -->
+    <div class="section-title">Summary</div>
+    <div class="card">
+        <p><strong>Total Items:</strong> {{ total_items }}</p>
+        <p><strong>Matched:</strong> {{ matched_count }}</p>
+        <p><strong>Issues:</strong> {{ issues_count }}</p>
+    </div>
+
+    <!-- FINANCIAL -->
+    <div class="section-title">Financial Summary</div>
+    <div class="card">
+        <p><strong>PO Total:</strong> ${{ po_total }}</p>
+        <p><strong>Receipt Total:</strong> ${{ receipt_total }}</p>
+    </div>
+
+    <!-- NEXT STEPS -->
+    <div class="section-title">Next Steps</div>
+    <div class="card">
+        <ul>
+            <li>Contact supplier if items/quantities are incorrect</li>
+            <li>Upload corrected receipt if needed</li>
+            <li>Contact Finance for clarification</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        Procurement System • Automated PDF Report • Do Not Reply
+    </div>
+
+</body>
+</html>

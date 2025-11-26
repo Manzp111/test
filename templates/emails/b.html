@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; }
+        .section { margin-bottom: 20px; }
+        .section h3 { color: #34495e; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #34495e; padding: 10px; text-align: left; }
+        th { background-color: #ecf0f1; }
+        .total-row { font-weight: bold; }
+        .notes { background-color: #f8f9fa; padding: 15px; border-left: 3px solid #3498db; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>RECEIPT</h1>
+        <p>Receipt #: RCPT-2025-001 | Date: November 23, 2025</p>
+    </div>
+
+    <div class="section">
+        <h3>VENDOR INFORMATION</h3>
+        <p><strong>Tech Solutions Rwanda Ltd</strong><br>
+        KN 123 St, Kigali, Rwanda<br>
+        Phone: +250 788 123 456<br>
+        Email: sales@techsolutions.rw<br>
+        Tax ID: 123456789</p>
+    </div>
+
+    <div class="section">
+        <h3>BILL TO</h3>
+        <p><strong>IST Africa</strong><br>
+        KG 567 Avenue, Kigali, Rwanda<br>
+        Attn: Procurement Department<br>
+        Email: procurement@ist.africa</p>
+    </div>
+
+    <div class="section">
+        <h3>PURCHASE DETAILS</h3>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+            </tr>
+
+            <tr>
+                <td>1</td>
+                <td>MacBook Pro 16&quot; M3 Pro<br>- 12-core CPU, 18-core GPU<br>- 36GB RAM, 1TB SSD</td>
+                <td>1</td>
+                <td>$2,499.00</td>
+                <td>$2,499.00</td>
+            </tr>
+
+            <tr>
+                <td>2</td>
+                <td>Samsung T7 External SSD 2TB<br>Portable NVMe SSD, USB 3.2</td>
+                <td>2</td>
+                <td>$120.00</td>
+                <td>$240.00</td>
+            </tr>
+
+            <tr>
+                <td>3</td>
+                <td>AppleCare+ for MacBook Pro<br>3-year extended warranty</td>
+                <td>1</td>
+                <td>$379.00</td>
+                <td>$379.00</td>
+            </tr>
+
+            <tr class="total-row">
+                <td colspan="4" style="text-align: right;">SUBTOTAL</td>
+                <td>$3,118.00</td>
+            </tr>
+
+            <tr class="total-row">
+                <td colspan="4" style="text-align: right;">VAT (0%)</td>
+                <td>$0.00</td>
+            </tr>
+
+            <tr class="total-row">
+                <td colspan="4" style="text-align: right;">TOTAL PAID</td>
+                <td>$3,118.00</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h3>PAYMENT CONFIRMATION</h3>
+        <p>
+            • Payment Method: Bank Transfer<br>
+            • Transaction ID: BKTX-2025-9833<br>
+            • Payment Status: <strong>PAID IN FULL</strong><br>
+            • Payment Date: November 23, 2025
+        </p>
+    </div>
+
+    <div class="notes">
+        <h3>NOTES</h3>
+        <p>
+            • This receipt confirms full payment for the above items.<br>
+            • Keep this document for delivery and warranty claims.<br>
+            • For inquiries, contact sales@techsolutions.rw.
+        </p>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <p>Issued By: _________________________<br>
+        Name: Jean Nkundabera<br>
+        Position: Sales Manager<br>
+        Tech Solutions Rwanda Ltd</p>
+    </div>
+
+</body>
+</html>
