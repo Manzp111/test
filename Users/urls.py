@@ -6,6 +6,6 @@ urlpatterns = [
     path('login/', LoginAPIView.as_view(), name='login'),
     path("auth/refresh/", RefreshTokenAPIView.as_view(), name="token_refresh"),
     path('verify/', VerifyAccountAPIView.as_view(), name='verify_account'),
-    path("list/", UserListAPIView.as_view(), name="user-list"),
+    # path("list/", UserListAPIView.as_view(), name="user-list"),
 
 ]
