@@ -26,6 +26,7 @@ FIELD_ENCRYPTION_KEY = config("FIELD_ENCRYPTION_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+
 ALLOWED_HOSTS = ["*"]
 
 
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,16 +83,31 @@ WSGI_APPLICATION = 'procured_payment.wsgi.application'
 # settings.py
 import os
 
-DATABASES = {
+DB_LIVE= config('DB_LIVE')
+
+if DB_LIVE in ["False",False]:
+    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', 'ist_db'),
-        'USER': config('DB_USER', 'Ngilbert'),
-        'PASSWORD': config('DB_PASSWORD', 'Ng635188!'),
-        'HOST': config('DB_HOST', 'db'),  # <-- Docker service name
-        'PORT': config('DB_PORT', '5432'),
+        'NAME': "ist_db",
+        'USER': "postgres",
+        'PASSWORD': "Ng635188!",
+        'HOST': "localhost",
+        'PORT': "5432",
     }
-}
+    }
+else:
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST'),  # <-- Docker service name
+            'PORT': config('DB_PORT'),
+        }
+    }
 
 
 
@@ -131,12 +148,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # URL to access media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 
 # Default primary key field type
