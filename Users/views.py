@@ -63,9 +63,8 @@ class RegisterAPIView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data, context={"request": request})
 
-        # serializer = UserRegistrationSerializer(data=request.data)
 
-        # Validate manually, no automatic exception
+      
         serializer.is_valid(raise_exception=False)
 
         if serializer.errors:
@@ -88,14 +87,15 @@ class RegisterAPIView(APIView):
                 print("")
                 print(f"Verification token for {user.email}: {token_obj.token}")
                 print("")
-                # send_mail(
-                #     subject="Welcome!",
-                #     message=f"Your verification token is {token_obj.token}",
-                #     from_email="noreply@example.com",
-                #     recipient_list=[user.email],
-                #     fail_silently=False,
-                # )
-                send_welcome_email_task.delay(user.id, str(token_obj.token))
+                send_mail(
+                    subject="Welcome!",
+                    message=f"Your verification token is {token_obj.token}",
+                    from_email="noreply@example.com",
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                send_welcome_email_task.delay(user.id, str(token_obj.token)) 
+                # Send email asynchronously  i dont have the way i can host background task reason why  i used send enail 
         except Exception as e:
             # Catch any save error
             return api_response(
