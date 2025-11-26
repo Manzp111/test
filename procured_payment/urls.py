@@ -23,6 +23,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from .guide import home
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,6 +33,7 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'), # Schema file    
     path('api/swager/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'), # Swagger UI    
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("", home, name="home"),
 
     
 
