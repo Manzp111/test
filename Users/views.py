@@ -12,7 +12,7 @@ from .task import send_welcome_email_task
 from .mixins import UserStatusMixin
 from rest_framework_simplejwt.tokens import RefreshToken,TokenError
 from django.core.mail import send_mail
-
+from .send_email import send_verification_email
 
 class UserListAPIView(APIView):
     permission_classes = [permissions.AllowAny]  # Only logged-in users can see
@@ -87,13 +87,17 @@ class RegisterAPIView(APIView):
                 print("")
                 print(f"Verification token for {user.email}: {token_obj.token}")
                 print("")
-                send_mail(
-                    subject="Welcome!",
-                    message=f"Your verification token is {token_obj.token}",
-                    from_email="noreply@example.com",
-                    recipient_list=[user.email],
-                    fail_silently=False,
+                send_verification_email(
+                    to_email=user.email,
+                    token=token_obj.token
                 )
+                # send_mail(
+                #     subject="Welcome!",
+                #     message=f"Your verification token is {token_obj.token}",
+                #     from_email="noreply@example.com",
+                #     recipient_list=[user.email],
+                #     fail_silently=False,
+                # )
                 send_welcome_email_task.delay(user.id, str(token_obj.token)) 
                 # Send email asynchronously  i dont have the way i can host background task reason why  i used send enail 
         except Exception as e:
