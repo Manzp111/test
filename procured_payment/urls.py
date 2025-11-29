@@ -34,6 +34,7 @@ urlpatterns = [
     path('api/swager/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'), # Swagger UI    
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path("", home, name="home"),
+     path('i18n/', include('django.conf.urls.i18n')), # for language translation in django admin
 
     
 

@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -201,9 +202,17 @@ CELERY_TIMEZONE = "Africa/Kigali"
 # EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
-# re_6xzgaJjA_KrhKqLQeEYRe6PoqS9Run88N
 
-RESEND_API_KEY =config('RESEND_API_KE')
+
+# RESEND_API_KEY =config('RESEND_API_KE')
+# RESEND_API_KEY = config('RESEND_API_KEY')
+RESEND_API_KEY=config('RESEND_API_KEY')
+
+SENDGRID_API_KEY = config("SENDGRID_API_KEY")
+FROM_EMAIL = config("FROM_EMAIL")
+
+
+
 
 
 
@@ -211,8 +220,46 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",   # Vite frontend
     "http://127.0.0.1:5174", 
     "http://127.0.0.1:3000",
-    "https://gilbe.vercel.app/",
-    ""
+    "https://gilbe.vercel.app",
+    
   
 ]          # For development
 CORS_ALLOWED_ORIGINS_ALL=True
+
+
+JAZZMIN_SETTINGS = {
+    # title of the window (Will default to current_admin_site.site_title if absent or None)
+    "site_title": "Procured payment",
+
+    # Title on the login screen (19 chars max) (defaults to current_admin_site.site_header if absent or None)
+    "site_header": "P2p",
+
+    # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
+    "site_brand": "p2p",
+
+    
+
+    # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
+    "login_logo": None,
+
+    # Logo to use for login form in dark themes (defaults to login_logo)
+    "login_logo_dark": None,
+
+    # CSS classes that are applied to the logo above
+    "site_logo_classes": "img-circle",
+
+    # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
+    "site_icon": None,
+
+    # Welcome text on the login screen
+    "welcome_sign": "Welcome to the library",
+
+    # Copyright on the footer
+    "copyright": "Acme Library Ltd",
+
+   
+   
+
+
+
+}
