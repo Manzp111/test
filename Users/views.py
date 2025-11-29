@@ -85,23 +85,17 @@ class RegisterAPIView(APIView):
                 user.save()
                 token_obj = VerificationToken.objects.create(user=user)
             
-                send_verification_email(
-                    to_email=user.email,
-                    token=token_obj.token
-                )
-               
-                # send_verification_email_glid(
+                # send_verification_email(
                 #     to_email=user.email,
                 #     token=token_obj.token
                 # )
-                # print("sent email successfully with sendgrid")
-                # send_mail(
-                #     subject="Welcome!",
-                #     message=f"Your verification token is {token_obj.token}",
-                #     from_email="noreply@example.com",
-                #     recipient_list=[user.email],
-                #     fail_silently=False,
-                # )
+                print("Using SendGrid to send email")
+               
+                send_verification_email_glid(
+                    to_email=user.email,
+                    token=token_obj.token
+                )
+                print("Verification token sent:", token_obj.token)
 
                 send_welcome_email_task.delay(user.id, str(token_obj.token)) 
                 # Send email asynchronously  i dont have the way i can host background task reason why  i used send enail 
