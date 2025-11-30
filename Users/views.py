@@ -12,7 +12,7 @@ from .task import send_welcome_email_task
 from .mixins import UserStatusMixin
 from rest_framework_simplejwt.tokens import RefreshToken,TokenError
 from django.core.mail import send_mail
-from .send_email import send_verification_email, send_verification_email_glid
+from .send_email import  send_verification_email_glid
 from procurement.task_runner import run_in_background
 
 class UserListAPIView(APIView):
