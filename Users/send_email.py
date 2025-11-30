@@ -1,19 +1,19 @@
-import resend
+# import resend
 
-# Direct API key
-resend.api_key = "re_D1fTNEDG_8MyXm73aga5gUZPEKVKGJDwK"
+# # Direct API key
 
-def send_verification_email(to_email, token):
-    try:
-        return resend.Emails.send({
-            "from": "Procured payment <onboarding@resend.dev>",
-            "to": to_email,
-            "subject": "Your Verification Code",
-            "html": f"<p>Your verification code is <strong>{token}</strong></p>",
-        })
-    except Exception as e:
-        print("Email sending error:", e)
-        return None
+
+# def send_verification_email(to_email, token):
+#     try:
+#         return resend.Emails.send({
+#             "from": "Procured payment <onboarding@resend.dev>",
+#             "to": to_email,
+#             "subject": "Your Verification Code",
+#             "html": f"<p>Your verification code is <strong>{token}</strong></p>",
+#         })
+#     except Exception as e:
+#         print("Email sending error:", e)
+#         return None
 
 
 # import os
