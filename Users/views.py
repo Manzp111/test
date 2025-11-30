@@ -13,6 +13,7 @@ from .mixins import UserStatusMixin
 from rest_framework_simplejwt.tokens import RefreshToken,TokenError
 from django.core.mail import send_mail
 from .send_email import send_verification_email, send_verification_email_glid
+from procurement.task_runner import run_in_background
 
 class UserListAPIView(APIView):
     permission_classes = [permissions.AllowAny]  # Only logged-in users can see
@@ -83,21 +84,20 @@ class RegisterAPIView(APIView):
             with transaction.atomic():
                 user = serializer.create(serializer.validated_data)
                 user.save()
-                token_obj = VerificationToken.objects.create(user=user)
-            
-                # send_verification_email(
-                #     to_email=user.email,
-                #     token=token_obj.token
-                # )
+                token_obj = VerificationToken.objects.create(user=user)            
+       
                 print("Using SendGrid to send email")
                
-                send_verification_email_glid(
+                run_in_background(send_verification_email_glid,
                     to_email=user.email,
                     token=token_obj.token
                 )
                 print("Verification token sent:", token_obj.token)
+                # Correct usage
+                # run_in_background(send_welcome_email_task, user.id, str(token_obj.token))
+                # print("Welcome email task initiated")
 
-                send_welcome_email_task.delay(user.id, str(token_obj.token)) 
+                # run_in_background(send_welcome_email_task(user.id, str(token_obj.token))) 
                 # Send email asynchronously  i dont have the way i can host background task reason why  i used send enail 
         except Exception as e:
             # Catch any save error

@@ -5,11 +5,16 @@ from django.core.mail import EmailMessage,send_mail
 from django.db import transaction
 from django.conf import settings
 from weasyprint import HTML
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
+import base64
 
 # Local imports
 from .models import PurchaseRequest
 from .document_processing import extract_text_from_any_pdf, parse_with_ai
 from .ai_matching import are_items_same
+from .task_runner import run_in_background
+from .discremenance_email import send_discrepancy_email_task
 
 import logging
 
@@ -17,7 +22,7 @@ import logging
 
 logger = logging.getLogger(__name__) # Configure logger for this module
 
-@shared_task
+# @shared_task
 def process_proforma(request_id):
     """Process proforma with automatic format detection"""
     from .models import PurchaseRequest
@@ -54,58 +59,65 @@ def process_proforma(request_id):
 
 
 
-@shared_task
+
 def generate_purchase_order(request_id):
-    """
-    Generate a PDF Purchase Order and email it to the request creator.
-    """
     try:
         pr = PurchaseRequest.objects.get(id=request_id)
 
         if pr.status != "APPROVED":
             logger.warning(f"Skipping PO generation for non-approved request {request_id}")
             return
+
         items_with_totals = []
         for item in pr.items_json:
             item_copy = item.copy()
             item_copy["total_price"] = float(item["price"]) * int(item["quantity"])
             items_with_totals.append(item_copy)
 
-
-        # Render Template → HTML string
-        html_string = render_to_string("emails/po.html", {"purchase_request": pr,"items": items_with_totals,})
-
-        #  Convert HTML → PDF bytes
+        # Render PO → HTML → PDF
+        html_string = render_to_string("emails/po.html", {
+            "purchase_request": pr,
+            "items": items_with_totals,
+        })
         pdf_bytes = HTML(string=html_string).write_pdf()
 
-        # Save PDF to model field
+        # Save PDF
         filename = f"PO_{pr.id}.pdf"
         pr.purchase_order.save(filename, ContentFile(pdf_bytes), save=True)
 
-        # Email the PDF to request creator
+        # Send Email via SendGrid
         if pr.created_by and pr.created_by.email:
-            email = EmailMessage(
+            encoded_pdf = base64.b64encode(pdf_bytes).decode()
+
+            message = Mail(
+                from_email=settings.FROM_EMAIL,
+                to_emails=pr.created_by.email,
                 subject=f"Purchase Order #{pr.id} Approved",
-                body=(
-                    f"Hello {pr.created_by.last_name + pr.created_by.first_name},\n\n"
-                    f"Your purchase request titled '{pr.title}' has been fully approved.\n"
-                    f"The Purchase Order is attached.\n\n"
-                    f"Thank you.\n"
-                ),
-                to=[pr.created_by.email],
+                html_content=(
+                    f"<p>Hello {pr.created_by.first_name} {pr.created_by.last_name},</p>"
+                    f"<p>Your purchase request titled <strong>{pr.title}</strong> has been approved.</p>"
+                    f"<p>The Purchase Order PDF is attached.</p>"
+                )
             )
 
-            email.attach(filename, pdf_bytes, "application/pdf")
-            email.send()
+            # Add PDF attachment
+            attachment = Attachment(
+                FileContent(encoded_pdf),
+                FileName(filename),
+                FileType("application/pdf"),
+                Disposition("attachment")
+            )
+            message.attachment = attachment
 
-            logger.info(f" PO emailed to {pr.created_by.email}")
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+            sg.send(message)
 
-        logger.info(f" Purchase Order generated and emailed for request {request_id}")
+            logger.info(f"PO emailed to {pr.created_by.email}")
+
+        logger.info(f"Purchase Order generated and emailed for request {request_id}")
 
     except Exception as e:
-        logger.error(f" PO generation failed for request {request_id}: {e}")
-
-        # Clean-up fallback: remove invalid PO file
+        logger.error(f"PO generation failed for request {request_id}: {e}")
         try:
             pr = PurchaseRequest.objects.get(id=request_id)
             pr.purchase_order = None
@@ -119,7 +131,7 @@ def generate_purchase_order(request_id):
 
 
 
-@shared_task(bind=True, max_retries=2)
+# @shared_task(bind=True, max_retries=2)
 def validate_receipt(self, request_id):
     """
     Performs intelligent 3-way matching between:
@@ -255,7 +267,8 @@ def validate_receipt(self, request_id):
                     "receipt_items_raw": receipt_items
                 }
                 pr.save()
-                send_discrepancy_email_task.delay(request_id)
+                # send_discrepancy_email_task
+                send_discrepancy_email_task(request_id)
             else:
                 pr.three_way_match_status = "MATCHED"
                 pr.discrepancy_details = {"vendor_match": vendor_match}
@@ -283,109 +296,4 @@ def validate_receipt(self, request_id):
     
 
 
-@shared_task(bind=True, max_retries=3)
-def send_discrepancy_email_task(self, request_id):
-    """
-    Generates a beautifully formatted PDF discrepancy report and emails it.
-    """
-    try:
-       
-
-        pr = PurchaseRequest.objects.get(id=request_id)
-        staff = pr.created_by
-        
-        if not staff or not staff.email:
-            logger.warning(f"No email for staff on request {request_id}")
-            return
-
-        details = pr.discrepancy_details
-        receipt_items = {item.get("name", "").lower(): item for item in details.get("receipt_items_raw", [])}
-        po_items = {item.get("name", "").lower(): item for item in pr.items_json}
-
-        vendor_match = details.get("vendor_match", True)
-
-        all_items = set(po_items.keys()) | set(receipt_items.keys())
-        matched_count = 0
-        rows = []
-
-        # Build rows for HTML table
-        for item_name in sorted(all_items):
-            po_item = po_items.get(item_name)
-            rcpt_item = receipt_items.get(item_name)
-
-            row = {
-                "name": item_name.title(),
-                "po_price": po_item["price"] if po_item else "-",
-                "receipt_price": rcpt_item["price"] if rcpt_item else "-",
-                "po_qty": po_item["quantity"] if po_item else "-",
-                "receipt_qty": rcpt_item["quantity"] if rcpt_item else "-"
-            }
-
-            # Determine status
-            if po_item and rcpt_item:
-                price_ok = qty_ok = True
-
-                if po_item["price"] > 0:
-                    price_diff_pct = abs(po_item["price"] - rcpt_item["price"]) / po_item["price"] * 100
-                    if price_diff_pct > float(pr.amount_tolerance_percent):
-                        price_ok = False
-
-                if po_item["quantity"] > 0:
-                    qty_diff_pct = abs(po_item["quantity"] - rcpt_item["quantity"]) / po_item["quantity"] * 100
-                    if qty_diff_pct > float(pr.quantity_tolerance_percent):
-                        qty_ok = False
-
-                if price_ok and qty_ok:
-                    row["status"] = "MATCHED"
-                    matched_count += 1
-                else:
-                    row["status"] = "MISMATCH"
-
-            elif po_item:
-                row["status"] = "MISSING_IN_RECEIPT"
-            elif rcpt_item:
-                row["status"] = "EXTRA_IN_RECEIPT"
-
-            rows.append(row)
-
-        issues_count = len(all_items) - matched_count
-
-        # Build HTML using template
-        context = {
-            "pr": pr,
-            "staff": staff,
-            "details": details,
-            "vendor_match": vendor_match,
-            "items": rows,
-            "matched_count": matched_count,
-            "issues_count": issues_count,
-            "total_items": len(all_items),
-            "po_total": pr.total_amount_extracted or pr.amount,
-            "receipt_total": details.get("receipt_total", "-"),
-        }
-
-        html_string = render_to_string("email/matching_report.html", context)
-        pdf_bytes = HTML(string=html_string).write_pdf()
-
-        # Send email with attached PDF
-        email = EmailMessage(
-            subject=f"3-Way Matching Report: {pr.title}",
-            body=(
-                f"Hi {staff.first_name},\n\n"
-                f"Your detailed 3-way matching report is attached as a PDF.\n\n"
-                f"Request ID: {pr.id}\n"
-                f"PO Total: ${pr.total_amount_extracted or pr.amount}\n\n"
-                f"Best regards,\nProcurement System"
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[staff.email],
-        )
-
-        email.attach(f"3way_report_{pr.id}.pdf", pdf_bytes, "application/pdf")
-        email.send()
-
-        logger.info(f" PDF report sent to {staff.email} for request {request_id}")
-
-    except Exception as exc:
-        logger.error(f" PDF report task failed for request {request_id}: {exc}")
-        raise self.retry(exc=exc, countdown=60)
+# @shared_task(bind=True, max_retries=3)

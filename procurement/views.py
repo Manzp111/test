@@ -23,6 +23,7 @@ from rest_framework import filters
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from .tasks import process_proforma,validate_receipt
+from .task_runner import run_in_background
 
 
 
@@ -45,7 +46,7 @@ class PurchaseRequestViewSet(ModelViewSet):
     'current_level': ['exact'],
     'created_by': ['exact'],
     'created_at': ['exact'],
-}
+      }
 
     search_fields = ['title', 'description', 'vendor_name']
     ordering_fields = ['created_at', 'amount', 'current_level', 'status']
@@ -102,7 +103,7 @@ class PurchaseRequestViewSet(ModelViewSet):
                         request=models.OuterRef('pk'),
                         actor=user,
                         level=models.OuterRef('current_level'),
-                        action__in=['APPROVED', 'REJECTED']
+                        action__in=['APPROVED', 'REJECTED',"REVIEW"]
                     )
                 )
             )
@@ -158,7 +159,8 @@ class PurchaseRequestViewSet(ModelViewSet):
 
         # Trigger AI processing
         try:
-            process_proforma.delay(purchase_request.id)
+            run_in_background(process_proforma(purchase_request.id))
+            # process_proforma.delay(purchase_request.id)
         except Exception as e:
             print(f"AI processing error: {e}")
 
@@ -280,7 +282,7 @@ class PurchaseRequestViewSet(ModelViewSet):
             )
 
           
-            if purchase_request.status != "PENDING":
+            if purchase_request.status not in ['PENDING', 'REVIEW']:
                 return api_response(
                     success=False,
                     message="Request is already processed.",
@@ -335,11 +337,13 @@ class PurchaseRequestViewSet(ModelViewSet):
 
                 
                 from .tasks import generate_purchase_order
-                generate_purchase_order.delay(purchase_request.id)
+                # generate_purchase_order.delay(purchase_request.id)
+                run_in_background(generate_purchase_order,purchase_request.id)
 
             else:
                 # LEVEL 1 → LEVEL 2
                 purchase_request.current_level = 2
+                purchase_request.status = "REVIEW"
                 purchase_request.save()
 
         
@@ -475,7 +479,9 @@ class PurchaseRequestViewSet(ModelViewSet):
 
         # Optional: trigger receipt validation
         try:
-            validate_receipt.delay(purchase_request.id)
+            # run_in_background(validate_receipt,purchase_request.id)
+            run_in_background(lambda: validate_receipt(None, purchase_request.id))
+
         except Exception as e:
             print(f"Receipt validation error: {e}")
 

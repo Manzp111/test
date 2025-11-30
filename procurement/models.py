@@ -45,11 +45,13 @@ class ApprovalLevel(BaseModel):
 class PurchaseRequest(BaseModel):
     STATUS_CHOICES = [
         ("PENDING", "Pending"),
+        ("REVIEW", "Review"),
         ("APPROVED", "Approved"),
         ("REJECTED", "Rejected"),
     ]
 
     MATCHING_STATUS_CHOICES = [
+        ("NOT_STARTED", "Not Started"),
         ("PENDING", "Pending"),
         ("MATCHED", "Matched"),
         ("DISCREPANCY", "Discrepancy"),
