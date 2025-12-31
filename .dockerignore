@@ -4,3 +4,9 @@ __pycache__
 *.pyd
 *.sqlite3
 *.git
+.env
+db.sqlite3
+__pycache__
+staticfiles
+static
+

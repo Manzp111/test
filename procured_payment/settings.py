@@ -85,16 +85,24 @@ WSGI_APPLICATION = 'procured_payment.wsgi.application'
 # settings.py
 
 
+# DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': config('DB_NAME'),
+#             'USER': config('DB_USER'),
+#             'PASSWORD': config('DB_PASSWORD'),
+#             'HOST': config('DB_HOST'),  # <-- Docker service name
+#             'PORT': config('DB_PORT'),
+#         }
+#     }
+
+import dj_database_url
+
 DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST'),  # <-- Docker service name
-            'PORT': config('DB_PORT'),
-        }
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')
+    )
+}
 
 
 
